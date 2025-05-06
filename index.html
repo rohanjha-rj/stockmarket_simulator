@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Stock Market Simulator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-chart-line"></i> Stock Market Simulator</h1>
+      <div class="dark-mode-toggle">
+        <span>Dark Mode</span>
+        <label class="switch">
+          <input type="checkbox" id="darkModeToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <button class="btn reset-portfolio" id="resetPortfolio"><i class="fas fa-trash-alt"></i> Reset Portfolio</button>
+
+    <div class="nav-tabs">
+      <div class="nav-tab active" data-tab="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+      <div class="nav-tab" data-tab="portfolio"><i class="fas fa-briefcase"></i> Portfolio</div>
+      <div class="nav-tab" data-tab="watchlist"><i class="fas fa-eye"></i> Watchlist</div>
+      <div class="nav-tab" data-tab="orders"><i class="fas fa-exchange-alt"></i> Orders</div>
+      <div class="nav-tab" data-tab="research"><i class="fas fa-search"></i> Research</div>
+    </div>
+
+    <!-- Dashboard Tab -->
+    <div id="dashboard" class="tab-content active">
+      <div class="wallet-summary">
+        <div class="wallet-card">
+          <h3>Wallet Balance</h3>
+          <div class="amount">₹<span id="walletBalance">100,000.00</span></div>
+        </div>
+        <div class="wallet-card">
+          <h3>Portfolio Value</h3>
+          <div class="amount">₹<span id="portfolioValue">0.00</span></div>
+        </div>
+        <div class="wallet-card">
+          <h3>Today's P/L</h3>
+          <div class="amount"><span id="dailyPL">0.00</span> (<span id="dailyPLPercent">0.00</span>%)</div>
+        </div>
+        <div class="wallet-card">
+          <h3>Total P/L</h3>
+          <div class="amount"><span id="totalPL">0.00</span> (<span id="totalPLPercent">0.00</span>%)</div>
+        </div>
+      </div>
+
+      <div class="trading-controls">
+        <div class="order-form">
+          <h3><i class="fas fa-shopping-cart"></i> Buy Order</h3>
+          <div class="form-group">
+            <label for="buyStockSymbol">Stock Symbol</label>
+            <input type="text" id="buyStockSymbol" class="form-control" placeholder="e.g. RELIANCE">
+          </div>
+          <div class="form-group">
+            <label for="buyQuantity">Quantity</label>
+            <input type="number" id="buyQuantity" class="form-control" placeholder="Shares">
+          </div>
+          <div class="form-group">
+            <label>Order Type</label>
+            <div class="order-type-selector">
+              <div class="order-type active" data-type="market">Market</div>
+              <div class="order-type" data-type="limit">Limit</div>
+              <div class="order-type" data-type="stop">Stop</div>
+            </div>
+          </div>
+          <div class="form-group" id="limitPriceGroup" style="display: none;">
+            <label for="limitPrice">Limit Price</label>
+            <input type="number" id="limitPrice" class="form-control" placeholder="Price">
+          </div>
+          <div class="form-group" id="stopPriceGroup" style="display: none;">
+            <label for="stopPrice">Stop Price</label>
+            <input type="number" id="stopPrice" class="form-control" placeholder="Price">
+          </div>
+          <button class="btn btn-success btn-block" id="placeBuyOrder"><i class="fas fa-check"></i> Place Buy Order</button>
+        </div>
+
+        <div class="order-form">
+          <h3><i class="fas fa-money-bill-wave"></i> Sell Order</h3>
+          <div class="form-group">
+            <label for="sellStockSymbol">Stock Symbol</label>
+            <input type="text" id="sellStockSymbol" class="form-control" placeholder="e.g. RELIANCE">
+          </div>
+          <div class="form-group">
+            <label for="sellQuantity">Quantity</label>
+            <input type="number" id="sellQuantity" class="form-control" placeholder="Shares">
+          </div>
+          <div class="form-group">
+            <label>Order Type</label>
+            <div class="order-type-selector">
+              <div class="order-type active" data-type="market">Market</div>
+              <div class="order-type" data-type="limit">Limit</div>
+              <div class="order-type" data-type="stop">Stop</div>
+            </div>
+          </div>
+          <div class="form-group" id="sellLimitPriceGroup" style="display: none;">
+            <label for="sellLimitPrice">Limit Price</label>
+            <input type="number" id="sellLimitPrice" class="form-control" placeholder="Price">
+          </div>
+          <div class="form-group" id="sellStopPriceGroup" style="display: none;">
+            <label for="sellStopPrice">Stop Price</label>
+            <input type="number" id="sellStopPrice" class="form-control" placeholder="Price">
+          </div>
+          <button class="btn btn-danger btn-block" id="placeSellOrder"><i class="fas fa-check"></i> Place Sell Order</button>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="mainChart"></canvas>
+      </div>
+      
+      <div class="chart-controls">
+        <div class="technical-indicators">
+          <div class="indicator-badge" data-indicator="sma">SMA</div>
+          <div class="indicator-badge" data-indicator="ema">EMA</div>
+          <div class="indicator-badge" data-indicator="rsi">RSI</div>
+          <div class="indicator-badge" data-indicator="macd">MACD</div>
+          <div class="indicator-badge" data-indicator="bollinger">Bollinger</div>
+          <div class="indicator-badge" data-indicator="volume">Volume</div>
+        </div>
+        
+        <div class="d-flex justify-content-between">
+          <div>
+            <button class="btn btn-secondary chart-type-btn active" data-type="line"><i class="fas fa-chart-line"></i> Line</button>
+            <button class="btn btn-secondary chart-type-btn" data-type="bar"><i class="fas fa-chart-bar"></i> Bar</button>
+            <button class="btn btn-secondary"><i class="fas fa-clock"></i> 1D</button>
+            <button class="btn btn-secondary"><i class="fas fa-calendar-week"></i> 1W</button>
+            <button class="btn btn-secondary"><i class="fas fa-calendar-alt"></i> 1M</button>
+            <button class="btn btn-secondary"><i class="fas fa-calendar"></i> 1Y</button>
+          </div>
+        </div>
+      </div>
+
+      <h3><i class="fas fa-history"></i> Recent Activity</h3>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Symbol</th>
+              <th>Type</th>
+              <th>Quantity</th>
+              <th>Price</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="recentActivity">
+            <!-- Filled by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Portfolio Tab -->
+    <div id="portfolio" class="tab-content">
+      <h2><i class="fas fa-briefcase"></i> Your Portfolio</h2>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Name</th>
+              <th>Quantity</th>
+              <th>Avg. Cost</th>
+              <th>Current Price</th>
+              <th>Market Value</th>
+              <th>P/L</th>
+              <th>P/L %</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="portfolioTable">
+            <!-- Filled by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+      
+      <h3><i class="fas fa-chart-pie"></i> Portfolio Allocation</h3>
+      <div class="chart-container">
+        <canvas id="allocationChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Watchlist Tab -->
+    <div id="watchlist" class="tab-content">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2><i class="fas fa-eye"></i> Watchlist</h2>
+        <button class="btn btn-primary" id="addToWatchlist"><i class="fas fa-plus"></i> Add Stock</button>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Name</th>
+              <th>Price</th>
+              <th>Change</th>
+              <th>Change %</th>
+              <th>Volume</th>
+              <th>Market Cap</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="watchlistTable">
+            <!-- Filled by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Orders Tab -->
+    <div id="orders" class="tab-content">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2><i class="fas fa-exchange-alt"></i> Orders</h2>
+        <div>
+          <button class="btn btn-secondary" id="showOpenOrders">Open</button>
+          <button class="btn btn-secondary" id="showExecutedOrders">Executed</button>
+          <button class="btn btn-secondary" id="showCancelledOrders">Cancelled</button>
+        </div>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Date</th>
+              <th>Symbol</th>
+              <th>Type</th>
+              <th>Side</th>
+              <th>Quantity</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTable">
+            <!-- Filled by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Research Tab -->
+    <div id="research" class="tab-content">
+      <h2><i class="fas fa-search"></i> Stock Research</h2>
+      
+      <div class="form-group">
+        <input type="text" id="researchSymbol" class="form-control" placeholder="Search for a stock (e.g. RELIANCE)">
+      </div>
+      
+      <div id="stockDetails" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 id="stockName"></h3>
+          <div>
+            <button class="btn btn-primary" id="addToWatchlistFromResearch"><i class="fas fa-eye"></i> Watch</button>
+            <button class="btn btn-success" id="buyFromResearch"><i class="fas fa-shopping-cart"></i> Buy</button>
+          </div>
+        </div>
+        
+        <div class="chart-container">
+          <canvas id="researchChart"></canvas>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <h4><i class="fas fa-info-circle"></i> Company Info</h4>
+            <div id="companyInfo"></div>
+          </div>
+          <div class="col-md-6">
+            <h4><i class="fas fa-chart-bar"></i> Key Metrics</h4>
+            <div id="keyMetrics"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add to Watchlist Modal -->
+  <div class="modal" id="watchlistModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add to Watchlist</h3>
+        <button class="btn btn-secondary" id="closeWatchlistModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="watchlistStockSymbol">Stock Symbol</label>
+          <input type="text" id="watchlistStockSymbol" class="form-control" placeholder="e.g. RELIANCE">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelWatchlistAdd">Cancel</button>
+        <button class="btn btn-primary" id="confirmWatchlistAdd">Add to Watchlist</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Confirmation Modal -->
+  <div class="modal" id="orderConfirmationModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="orderConfirmationTitle">Order Confirmation</h3>
+        <button class="btn btn-secondary" id="closeOrderConfirmationModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="orderConfirmationDetails"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelOrderConfirmation">Cancel</button>
+        <button class="btn btn-success" id="confirmOrder">Confirm Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div class="modal" id="resetConfirmationModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Reset Portfolio</h3>
+        <button class="btn btn-secondary" id="closeResetConfirmationModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to reset your portfolio? This will:</p>
+        <ul>
+          <li>Reset your wallet balance to ₹100,000</li>
+          <li>Clear all your holdings</li>
+          <li>Clear your transaction history</li>
+          <li>Clear all pending orders</li>
+        </ul>
+        <p>This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelReset">Cancel</button>
+        <button class="btn btn-danger" id="confirmReset">Reset Portfolio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@2.0.2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2"></script>
+  <script src="script.js"></script>
+</body>
+</html>
